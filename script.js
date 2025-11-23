@@ -193,7 +193,8 @@ function updateStatus(){
   updateUI();
   const nt = el('nextThreshold'); if(nt) nt.textContent = String(nextThresholdValue(selectionCount));
   const cb = el('comboBank'); if(cb) cb.textContent = String(getComboBank());
-  const mv = el('movesLeft'); if(mv) mv.textContent = (movesLeft===null) ? '∞' : String(movesLeft);
+  // Display the currently selected move limit (not remaining moves)
+  const mv = el('movesLeft'); if(mv) mv.textContent = (movesLimit===null) ? '∞' : String(movesLimit);
   // check if we've reached a score threshold for choice
   try{ checkThreshold(); }catch(e){}
 }
@@ -339,12 +340,12 @@ async function doSwap(a,b){
     const removedCount = Array.isArray(removedList) ? removedList.length : 0;
     // sum the 'value' fields from removed pieces for scoring
     const removedValueSum = Array.isArray(removedList) ? removedList.reduce((s,it)=> s + ((it.piece && typeof it.piece.value === 'number') ? it.piece.value : 1), 0) : 0;
-    // apply combo_bonus effects if any active (keeps previous behavior based on count)
+    // apply combo_bonus effects based on removed VALUE SUM (not piece count)
     let bonusPoints = 0;
     for(const ef of activeEffectsGlobal){
       if(ef.kind === 'combo_bonus' && ef.active){
         const mult = ef.multiplier || 0.5;
-        bonusPoints += Math.floor(removedCount * mult);
+        bonusPoints += Math.floor(removedValueSum * mult);
       }
     }
     addScore(removedValueSum + bonusPoints);

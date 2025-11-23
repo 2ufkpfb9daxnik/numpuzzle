@@ -50,7 +50,7 @@ export function generateEffectOptions(thresh, selectionCount, colorCount, shapeC
       const triggerCount = 12 + Math.floor(Math.random()*10);
       // allow removing multiple lines (rows/cols) — pick 1..3
       const linesToRemove = 1 + Math.floor(Math.random()*3);
-      opts.push({ title:`全削除数 ${triggerCount} で行/列を ${linesToRemove} 本消去`, trigger:{kind:'remove_total', count:triggerCount}, action:{kind:'remove_line', count: linesToRemove} });
+        opts.push({ title:`全削除値合計 ${triggerCount} で行/列を ${linesToRemove} 本消去`, trigger:{kind:'remove_total', count:triggerCount}, action:{kind:'remove_line', count: linesToRemove} });
     }
   }
   return opts;
@@ -145,7 +145,7 @@ export async function checkEffectsProgress(getState, helpers){
       } else if(trig && trig.kind === 'remove_total'){
         const need = trig.count || 0; const base = (ef._base && ef._base.removedTotal) || 0; const cur = (removedTotal || 0) - base;
         if(cur >= need){
-          if(typeof uiLog === 'function') uiLog(`効果発動: ${ef.title} (全削除数 ${cur}/${need})`);
+           if(typeof uiLog === 'function') uiLog(`効果発動: ${ef.title} (全削除値合計 ${cur}/${need})`);
           state.removedTotal = Math.max(0, (state.removedTotal||0) - need);
           if(act){ await executeAction(ef, act, getState, helpers); actionExecuted = true; }
           // reset baseline for removedTotal so progress shows 0 and can accumulate again
@@ -276,7 +276,9 @@ export async function executeAction(ef, action, getState, helpers){
 
   const removedNow = [];
   for(const t of targets){ const p = board[t.r] && board[t.r][t.c]; if(p){ removedNow.push({r:t.r,c:t.c,piece:p}); board[t.r][t.c] = null; } }
-  if(typeof uiLog === 'function') uiLog(`効果により削除されたセル（進捗に含めない）: ${removedNow.length}`);
+  // compute total value removed (these removals do NOT count toward progression)
+  const removedValueSum = removedNow.reduce((s,it)=> s + ((it.piece && it.piece.value) || 0), 0);
+  if(typeof uiLog === 'function') uiLog(`効果により削除されたセル（進捗に含めない）: ${removedNow.length} 個、値合計 ${removedValueSum}`);
   // Detailed logging: list all removed positions and piece info
   if(removedNow.length>0){
     try{
