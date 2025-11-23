@@ -1,0 +1,142 @@
+:root{
+  --cell-size: 56px;
+  --gap: 6px;
+}
+*{box-sizing:border-box}
+body{font-family:system-ui, -apple-system, 'Segoe UI', Roboto, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif; margin:12px; background-color:#f6f7fb; background-image: url('./bg.jpg'); background-size:cover; background-position:left center; background-repeat:no-repeat}
+.app{max-width:900px;margin:0 auto}
+header{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+header h1{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);margin:0}
+.controls{display:flex;gap:10px;align-items:center}
+.controls label{font-size:14px}
+.status{display:flex;gap:18px;font-weight:600}
+main{display:flex;justify-content:flex-start;align-items:flex-start}
+#outer-root, html,body{height:100%}
+.outerLayout{display:grid;gap:12px;min-height:100vh;height:100vh;grid-template-columns:300px 220px 1fr 260px;grid-template-rows:auto 1fr;grid-template-areas:"log thresholds main effects"}
+.outerLayout > .logPanel{grid-area:log}
+.outerLayout > #thresholdsPanel{grid-area:thresholds}
+.outerLayout > .app{grid-area:main;overflow:auto}
+.outerLayout > #effectsPanel{grid-area:effects;overflow:auto}
+@media (min-width:681px){ html,body{overflow:hidden} }
+.logPanel{width:300px;height:100vh;overflow:auto;padding:12px;background: rgba(255,255,255,0.95);border-radius:8px}
+.logPanel .logOutput{max-height:none}
+#thresholdsPanel, .thresholdsPanel{width:220px;background: rgba(255,255,255,0.85);border-radius:8px;padding:12px;height:100vh;overflow:auto;backdrop-filter: blur(1px);color:#111}
+#thresholdsPanel h3{margin-top:0;margin-bottom:8px}
+#boardContainer{display:grid;background:#e9eef7;padding:8px;border-radius:8px;position:relative}
+
+.app{flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;padding:18px 0}
+main{flex:1;display:flex;justify-content:flex-start;align-items:flex-start;width:100%}
+
+/* matched highlight styles */
+.cellInner.matched{border-radius:50%;transition:box-shadow .18s ease, outline .18s ease}
+.cellInner.matched-color{ }
+.cellInner.matched-shape{ }
+.cellInner.removing{transform:scale(.18);opacity:0}
+
+/* match ring overlays */
+.matchRing{position:absolute;left:4%;top:4%;right:4%;bottom:4%;border-radius:50%;border:4px solid transparent;pointer-events:none;box-sizing:border-box;z-index:6}
+.matchRing-color{box-shadow:0 0 10px rgba(0,0,0,0.08)}
+.matchRing-shape{border-style:dashed}
+
+/* mobile layout: thresholds and effects side-by-side on top, then main (board), then log */
+@media (max-width:680px){
+  html,body{overflow-x:hidden; margin:0; padding:0}
+  .outerLayout{grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr auto;grid-template-areas:"thresholds effects" "main main" "log log";height:auto}
+  .logPanel{width:100%;order:3}
+  #thresholdsPanel, #effectsPanel{height:auto;max-height:220px;overflow:auto}
+  .app{grid-column:1 / -1; padding:8px 6px}
+  /* Ensure board container uses full available width and is left-aligned */
+  /* remove centering/max-width so app fills screen */
+  .app{max-width:100%; margin:0}
+  /* make board fill full width and remove left padding */
+  #boardContainer{width:100%; padding:2px 6px 6px 0; margin-left:0}
+}
+
+/* choice panel modal */
+.choicePanel{position:fixed;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.36);z-index:999}
+.choiceContent{background: rgba(255,255,255,1);color:#111;padding:18px;border-radius:10px;min-width:320px;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+.choiceContent h3{margin:0 0 8px}
+.choiceButtons{display:flex;gap:8px;justify-content:space-between;margin-top:12px}
+.choiceButtons button{flex:1;padding:8px;border-radius:6px;border:1px solid #ccc;background:#f6f7fb;cursor:pointer}
+.choiceButtons button:hover{background:#eef3ff}
+.cell{width:var(--cell-size);height:var(--cell-size);display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;transition:transform .18s ease, box-shadow .18s ease}
+.cellInner{width:84%;height:84%;border-radius:50%;background:#fff;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.06) inset;display:flex;align-items:center;justify-content:center;transition:transform .22s ease, opacity .18s ease, background .12s}
+.cellInner svg{width:70%;height:70%;display:block}
+.cellInner .shape-bg{fill:transparent}
+.cell.selected{transform:scale(1.06);box-shadow:0 6px 12px rgba(0,0,0,.12)}
+.cell.removed{transition:transform .18s ease, box-shadow .18s ease}
+.cell.removed .cellInner{background: linear-gradient(45deg, #f0f4f8 0 25%, #ffffff 25% 50%); opacity:0.6}
+
+.cellInner.removing{transform:scale(.18);opacity:0}
+.cellInner.dragging{box-shadow:0 10px 18px rgba(0,0,0,.18);transform:scale(1.04)}
+
+.dragging{border-radius:50%}
+.coords{position:absolute;right:4px;bottom:2px;font-size:9px;opacity:.45}
+footer{margin-top:12px;color:#666}
+
+.logHeader{font-weight:700;margin-bottom:6px}
+.logOutput{font-family:monospace;font-size:12px;line-height:1.4;white-space:pre-wrap}
+
+.effectsPanel{background: rgba(255,255,255,0.90);border-radius:8px;padding:8px;margin:8px 0;width:100%;max-width:720px;backdrop-filter: blur(1px);color:#111}
+.effectsPanel h3{margin:0 0 6px}
+.mainWrap{display:flex;gap:12px;align-items:flex-start}
+.effectsPanel{width:260px;flex:0 0 260px}
+.effectsItem{display:flex;justify-content:space-between;align-items:center;padding:6px;border-bottom:1px dashed #eee}
+.effectsItem:last-child{border-bottom:none}
+.effectsItem.effects-fired{background: rgba(255,80,80,0.08); border-radius:6px}
+.effectsLabel{font-size:13px}
+.effectsProgress{font-size:12px;color:#666}
+
+/* effect overlay animations */
+.effectOverlay{position:absolute;left:0;top:0;right:0;bottom:0;border-radius:6px;pointer-events:none;z-index:8;transition:opacity .5s ease, transform .5s ease;opacity:0.98}
+.effectOverlay.line{border:3px solid rgba(255,80,80,0.9);box-shadow:0 0 12px rgba(255,80,80,0.18)}
+.effectOverlay.rect{border:3px solid rgba(80,160,255,0.95);box-shadow:0 0 12px rgba(80,160,255,0.18)}
+.effectOverlay.area{border:3px solid rgba(160,255,120,0.95);box-shadow:0 0 12px rgba(160,255,120,0.18)}
+
+/* temporary per-row/column highlight when an effect deletes a full line */
+.cell.highlight-line .cellInner{ background: rgba(255,80,80,0.9) !important; transition:background .18s ease; }
+.cell.highlight-line{ z-index:12 }
+
+/* highlight for rect (m*n block) use a different color */
+.cell.highlight-rect .cellInner{ background: rgba(80,160,255,0.92) !important; transition:background .18s ease; }
+.cell.highlight-rect{ z-index:12 }
+
+/* effect choice panel */
+.effectOptions{display:flex;gap:10px}
+.effectOption{background: rgba(255,255,255,0.98);border-radius:8px;padding:10px;flex:1;display:flex;flex-direction:column;align-items:stretch;box-shadow:0 2px 6px rgba(0,0,0,0.08);color:#111}
+.effectTitle{font-weight:700;margin-bottom:6px}
+.effectDesc{flex:1;font-size:13px;color:#222}
+.effectOption button{margin-top:8px}
+
+/* responsiveness */
+@media (max-width:420px){:root{--cell-size:44px}}
+
+/* end overlay styles */
+.endOverlay{position:fixed;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:1200}
+.endContent{background: rgba(255,255,255,1);padding:28px;border-radius:12px;text-align:center;min-width:320px}
+
+/* value label shown on pieces for readability */
+.valueLabel{position:static;background:transparent;color:inherit;padding:0;margin:0;font-weight:600;font-size:12px}
+
+/* increase general text contrast in panels */
+#thresholdsPanel, .effectsPanel, .choiceContent, .endContent{color:#111}
+
+/* improve footer/readme text readability */
+footer small.explain{display:block;margin-top:6px;color:#333;font-size:13px}
+.endTitle{font-size:20px;font-weight:800;margin-bottom:8px}
+.endScore{font-size:48px;font-weight:900;color:#2b6cff;margin-bottom:12px}
+.endButtons button{padding:10px 18px;border-radius:8px;border:none;background:#2b6cff;color:#fff;cursor:pointer}
+
+/* make header controls and status blocks clearly readable */
+.controls{background: rgba(255,255,255,1); padding:8px; border-radius:8px}
+.status{background: rgba(255,255,255,1); padding:8px; border-radius:8px; margin-top:8px}
+
+/* footer (操作/ルール説明) - readable white background */
+footer{background: rgba(255,255,255,1); padding:10px; border-radius:8px}
+
+/* mobile: stack effect choices vertically */
+@media (max-width:680px){
+  .effectOptions{flex-direction:column}
+  .effectOption{width:100%}
+  .effectOption button{width:100%}
+}

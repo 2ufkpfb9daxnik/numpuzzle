@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>重ね合わせパズル</title>
+  <link rel="stylesheet" href="stylesheet.css" />
+</head>
+<body>
+  <div class="outerLayout">
+    <aside class="logPanel">
+      <div class="logHeader">コンソールログ</div>
+      <div id="logOutput" class="logOutput"></div>
+    </aside>
+    <!-- thresholds panel: moved to the right of the console -->
+    <aside id="thresholdsPanel" class="thresholdsPanel">
+      <h3>必要削除値（色 / 形）</h3>
+      <div id="thresholdsContent"></div>
+    </aside>
+    <aside id="effectsPanel" class="effectsPanel">
+      <h3>選択済み効果</h3>
+      <div id="effectsList"></div>
+    </aside>
+
+    <div class="app">
+        <header>
+          <h1>重ね合わせパズル</h1>
+        <div class="controls">
+          <div class="meta">盤面サイズ: <span id="sizeDisplay">8</span></div>
+          <div class="meta">色数: <span id="colorDisplay">8</span></div>
+          <div class="meta">形数: <span id="shapeDisplay">8</span></div>
+            <!-- reset button removed per request -->
+          <button id="dumpBtn">盤面を出力</button>
+            <label style="margin-left:8px">手数制限:
+              <select id="moveLimitSelect">
+                <option value="10" selected>10</option>
+                <option value="30">30</option>
+                <option value="50">50</option>
+                <option value="-1">無制限</option>
+              </select>
+            </label>
+            <div class="meta">残り手数: <span id="movesLeft">∞</span></div>
+        </div>
+        <div class="status">
+          <div>Score: <span id="score">0</span></div>
+          <div>Combo: <span id="combo">0</span></div>
+          <div>コンボ累積: <span id="comboBank">0</span></div>
+          <div>次の選択まで: <span id="nextThreshold">0</span></div>
+        </div>
+      </header>
+      
+    <div class="mainWrap">
+      <main>
+        <div id="boardContainer"></div>
+      </main>
+    </div>
+
+    <!-- end overlay shown when game ends -->
+    <div id="endOverlay" class="endOverlay" style="display:none">
+      <div class="endContent">
+        <div class="endTitle">ゲーム終了</div>
+        <div class="endScore" id="endScore">Score: 0</div>
+        <div class="endBreakdown">
+          <div>削除合計値: <span id="endRemovedTotal">0</span></div>
+          <div>コンボ累積: <span id="endComboBank">0</span></div>
+          <div>残り手数: <span id="endMovesLeft">0</span></div>
+        </div>
+        <div class="endButtons">
+          <button id="restartBtn">もう一度プレイ</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 選択パネル（スコア到達時に表示） -->
+    <div id="choicePanel" class="choicePanel" style="display:none">
+      <div class="choiceContent">
+        <h3>報酬を選んでください</h3>
+        <p id="choiceMsg">スコア閾値を達成しました。以下の中から一つ選んでください。</p>
+        <div class="choiceButtons">
+          <button id="choiceIncreaseSize">盤面サイズを +1 にする</button>
+          <button id="choiceDecreaseColor">色数を -1 にする</button>
+          <button id="choiceDecreaseShape">形の数を -1 にする</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 効果候補パネル（スコア到達時に3つの効果候補を提示） -->
+    <div id="effectChoicePanel" class="choicePanel" style="display:none">
+      <div class="choiceContent">
+        <h3>効果を1つ選んでください</h3>
+        <p id="effectChoiceMsg">スコア閾値を達成しました。以下の効果から1つ選択してください。</p>
+        <div id="effectOptions" class="effectOptions">
+          <div class="effectOption" data-idx="0">
+            <div class="effectTitle" id="effectTitle0">効果A</div>
+            <div class="effectDesc" id="effectDesc0">説明A</div>
+            <button id="chooseEffect0">選択</button>
+          </div>
+          <div class="effectOption" data-idx="1">
+            <div class="effectTitle" id="effectTitle1">効果B</div>
+            <div class="effectDesc" id="effectDesc1">説明B</div>
+            <button id="chooseEffect1">選択</button>
+          </div>
+          <div class="effectOption" data-idx="2">
+            <div class="effectTitle" id="effectTitle2">効果C</div>
+            <div class="effectDesc" id="effectDesc2">説明C</div>
+            <button id="chooseEffect2">選択</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <small>操作: セルをクリックして2つ選択 → スワップ。ドラッグやスワイプでの入れ替えも可能です。スワップでマッチしなければ元に戻ります。</small>
+      <small class="explain">マッチ判定: 同じ色または同じ形で上下左右に連接した領域内の各ピースの「値（value）」の合計が、その色／形に設定された必要削除値以上になると、該当領域の全てのピースがまとめて削除されます。必要削除値は左側の「必要削除値」パネルで確認できます。</small>
+    </footer>
+  </div>
+
+  <script src="script.js" type="module"></script>
+</body>
+</html>
