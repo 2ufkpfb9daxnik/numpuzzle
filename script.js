@@ -539,8 +539,19 @@ function restartGame(){
   try{ const sel = el('moveLimitSelect'); if(sel){ sel.disabled = false; movesLocked = false; } }catch(e){}
   // reset score/combo
   setScore(0); setCombo(0);
+  try{ resetComboBank(); }catch(e){}
+  try{ hideChoicePanel(); }catch(e){}
+  // reset effect-related state so restart truly starts fresh
+  try{ awaitingChoice = false; }catch(e){}
+  try{ selectionCount = 5; }catch(e){}
+  try{ if(typeof hideEffectChoicePanel === 'function') hideEffectChoicePanel(); }catch(e){}
+  try{ if(Array.isArray(activeEffectsGlobal)) activeEffectsGlobal.length = 0; }catch(e){}
   // re-init board with current rows/cols
   initBoard(rows, cols);
+  // refresh effects panel and displays
+  try{ updateDisplays(); render(); }catch(e){}
+  try{ updateStatus(); }catch(e){}
+  try{ renderEffectsPanelUI(getState); }catch(e){}
   // hide overlay
   const ov = el('endOverlay'); if(ov) ov.style.display = 'none';
 }
