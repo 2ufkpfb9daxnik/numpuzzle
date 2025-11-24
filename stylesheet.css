@@ -24,6 +24,10 @@ main{display:flex;justify-content:flex-start;align-items:flex-start}
 #thresholdsPanel h3{margin-top:0;margin-bottom:8px}
 #boardContainer{display:grid;background:#e9eef7;padding:8px;border-radius:8px;position:relative}
 
+/* hex row layout: each row is a horizontal flex row; odd rows are offset for odd-r layout */
+.hexRow{display:flex;flex-wrap:nowrap;gap:var(--gap);align-items:center;margin-bottom:calc(var(--cell-size) * -0.18);justify-content:flex-start}
+.hexRow.odd{margin-left:calc(var(--cell-size) / 2);} 
+
 .app{flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;padding:18px 0}
 main{flex:1;display:flex;justify-content:flex-start;align-items:flex-start;width:100%}
 
@@ -59,7 +63,7 @@ main{flex:1;display:flex;justify-content:flex-start;align-items:flex-start;width
 .choiceButtons{display:flex;gap:8px;justify-content:space-between;margin-top:12px}
 .choiceButtons button{flex:1;padding:8px;border-radius:6px;border:1px solid #ccc;background:#f6f7fb;cursor:pointer}
 .choiceButtons button:hover{background:#eef3ff}
-.cell{width:var(--cell-size);height:var(--cell-size);display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;transition:transform .18s ease, box-shadow .18s ease}
+.cell{width:var(--cell-size);height:var(--cell-size);display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;transition:transform .18s ease, box-shadow .18s ease;flex:0 0 var(--cell-size)}
 .cellInner{width:84%;height:84%;border-radius:50%;background:#fff;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.06) inset;display:flex;align-items:center;justify-content:center;transition:transform .22s ease, opacity .18s ease, background .12s}
 .cellInner svg{width:70%;height:70%;display:block}
 .cellInner .shape-bg{fill:transparent}

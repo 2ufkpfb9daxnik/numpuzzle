@@ -19,9 +19,11 @@ export function generateEffectOptions(thresh, selectionCount, colorCount, shapeC
       const maxIdx = tk==='color' ? Math.max(0,colorCount-1) : Math.max(0,shapeCount-1);
       const tid = Math.floor(Math.random()*(maxIdx+1));
       // triggerCount represents the required TOTAL value removed for that color/shape
-      // use a three-digit-ish random threshold (100..999), scaled mildly by selectionCount
-      const base = 100 + Math.floor(Math.random()*900);
-      const triggerCount = Math.min(999, Math.floor(base + (selectionCount-1) * 20));
+      // increase base threshold range (higher lower/upper bounds)
+      const baseMin = 300;
+      const baseMax = 900;
+      const base = baseMin + Math.floor(Math.random()*(baseMax - baseMin + 1));
+      const triggerCount = Math.min(999, Math.floor(base + (selectionCount-1) * 50));
       const actKind = Math.random()<0.5 ? 'color' : 'shape';
       const actMax = actKind==='color' ? Math.max(0,colorCount-1) : Math.max(0,shapeCount-1);
       const actType = Math.floor(Math.random()*(actMax+1));
@@ -29,7 +31,8 @@ export function generateEffectOptions(thresh, selectionCount, colorCount, shapeC
       const title = `${tk==='color' ? getColorName(tid) : getShapeLabel(tid)} の値を合計 ${triggerCount} 消すと、${actKind==='color' ? getColorName(actType) : getShapeLabel(actType)} を ${removeCount} 個削除`;
       opts.push({ title, trigger: {kind:'remove_target', kindTarget:tk, type:tid, count:triggerCount}, action: {kind:'remove_target', targetKind:actKind, targetType:actType, count:removeCount} });
     } else if(k==='trigger_rect'){
-      const requiredCombo = Math.max(2, Math.floor(2 + Math.random()*4));
+      // increase combo requirement lower/upper bounds
+      const requiredCombo = Math.max(3, Math.floor(3 + Math.random()*6));
       const h = 2 + Math.floor(Math.random()*2);
       const w = 2 + Math.floor(Math.random()*3);
       if(Math.random()<0.5){
@@ -42,15 +45,17 @@ export function generateEffectOptions(thresh, selectionCount, colorCount, shapeC
         opts.push({ title:`コンボ${requiredCombo}で ${actKind==='color'? getColorName(actType) : getShapeLabel(actType)} を ${removeCount}個削除`, trigger:{kind:'combo_accum', count:requiredCombo}, action:{kind:'remove_target', targetKind:actKind, targetType:actType, count:removeCount} });
       }
     } else if(k==='combo_bonus'){
-      const threshold = 2 + Math.floor(Math.random()*5);
+      // increase combo bonus threshold lower/upper
+      const threshold = 4 + Math.floor(Math.random()*7);
       let multiplier = Math.round((0.5 + Math.random()*1.0) * 100) / 100;
       multiplier = Math.max(0.1, multiplier);
       opts.push({title:`コンボ ${threshold} で以後ボーナス x${multiplier}`, trigger:{kind:'combo_accum', count:threshold}, action:{kind:'combo_bonus', multiplier}, comboThreshold:threshold, multiplier});
     } else if(k==='trigger_line'){
-      const triggerCount = 12 + Math.floor(Math.random()*10);
-      // allow removing multiple lines (rows/cols) — pick 1..3
-      const linesToRemove = 1 + Math.floor(Math.random()*3);
-        opts.push({ title:`全削除値合計 ${triggerCount} で行/列を ${linesToRemove} 本消去`, trigger:{kind:'remove_total', count:triggerCount}, action:{kind:'remove_line', count: linesToRemove} });
+      // increase total-removed-value trigger
+      const triggerCount = 30 + Math.floor(Math.random()*40);
+      // allow removing multiple lines — pick 1..4
+      const linesToRemove = 1 + Math.floor(Math.random()*4);
+        opts.push({ title:`全削除値合計 ${triggerCount} で行または斜め方向を ${linesToRemove} 本消去`, trigger:{kind:'remove_total', count:triggerCount}, action:{kind:'remove_line', count: linesToRemove} });
     }
   }
   return opts;
@@ -198,19 +203,37 @@ export async function executeAction(ef, action, getState, helpers){
     }
   } else if(action.kind === 'remove_line'){
     const lines = action.count || 1;
-    // record which lines (rows/cols) we chose so we can visually highlight them
+    // For hex grid we support 3 axes: axis 0 = rows (r), axis 1 = q (axial q), axis 2 = s (axial s = -q-r)
+    // Build groups of cells by axis-key then pick random groups to remove
+    const groups = new Map();
+    function offsetToAxial(rr,cc){ const q = cc - Math.floor((rr - (rr & 1)) / 2); const r_ax = rr; return {q, r_ax}; }
+    for(let rr=0; rr<rows; rr++){
+      for(let cc=0; cc<cols; cc++){
+        const ax = offsetToAxial(rr,cc);
+        const keyR = `r:${ax.r_ax}`; const keyQ = `q:${ax.q}`; const keyS = `s:${-ax.q - ax.r_ax}`;
+        // create entries for each axis-key
+        if(!groups.has(keyR)) groups.set(keyR, []);
+        groups.get(keyR).push({r:rr,c:cc});
+        if(!groups.has(keyQ)) groups.set(keyQ, []);
+        groups.get(keyQ).push({r:rr,c:cc});
+        if(!groups.has(keyS)) groups.set(keyS, []);
+        groups.get(keyS).push({r:rr,c:cc});
+      }
+    }
+    const allKeys = Array.from(groups.keys());
     const linesChosen = [];
     for(let i=0;i<lines;i++){
-      const isRow = Math.random() < 0.5;
-      if(isRow){ const rr = Math.floor(Math.random()*rows); linesChosen.push({isRow:true,index:rr}); for(let c=0;c<cols;c++) targets.push({r:rr,c}); }
-      else { const cc = Math.floor(Math.random()*cols); linesChosen.push({isRow:false,index:cc}); for(let r=0;r<rows;r++) targets.push({r,c:cc}); }
+      if(allKeys.length===0) break;
+      const pickKey = allKeys[Math.floor(Math.random()*allKeys.length)];
+      allKeys.splice(allKeys.indexOf(pickKey), 1);
+      const groupCells = groups.get(pickKey) || [];
+      // record chosen axis/key for visualization
+      const parts = pickKey.split(':'); const axisName = parts[0]; const axisIdx = parts[1];
+      linesChosen.push({axis: axisName, index: axisIdx, cells: groupCells.slice()});
+      for(const it of groupCells) targets.push({r: it.r, c: it.c});
     }
-    // attach linesChosen to action for use below (visualization)
     action._linesChosen = linesChosen;
-    // play row/col sound(s)
-    try{
-      for(const L of linesChosen){ if(L.isRow) playSound('row'); else playSound('col'); }
-    }catch(e){}
+    try{ for(const L of linesChosen) playSound('row'); }catch(e){}
   } else if(action.kind === 'remove_rect'){
     const h = action.h || 2; const w = action.w || 3;
     const sr = Math.floor(Math.random()*(rows - h + 1));
@@ -233,11 +256,12 @@ export async function executeAction(ef, action, getState, helpers){
     try{
       if(typeof window !== 'undefined' && window.document){
         const cellsToHighlight = [];
-        // lines
+        // lines (supports hex axis groups)
         if(action && action._linesChosen && action._linesChosen.length){
           for(const L of action._linesChosen){
-            if(L.isRow){ for(let c=0;c<cols;c++) cellsToHighlight.push({r:L.index,c, kind:'line'}); }
-            else { for(let r=0;r<rows;r++) cellsToHighlight.push({r,c:L.index, kind:'line'}); }
+            if(Array.isArray(L.cells) && L.cells.length){
+              for(const it of L.cells) cellsToHighlight.push({r:it.r, c:it.c, kind:'line'});
+            }
           }
         }
         // rect

@@ -25,4 +25,7 @@ export function updateUI(){
   const cb = el('comboBank'); if(cb) cb.textContent = String(comboBank);
 }
 
-export function nextThresholdValue(selectionCount){ return Math.pow(3, selectionCount); }
+export function nextThresholdValue(selectionCount){
+  // Use N^N growth as requested (for selectionCount N)
+  try{ return Math.pow(selectionCount, selectionCount); }catch(e){ return Math.pow(3, selectionCount); }
+}

@@ -14,17 +14,26 @@ export function findMatches(state){
   const toRemove = new Set();
   const matchedColors = new Set();
   const matchedShapes = new Set();
+  // Helper: get hex neighbors (odd-r offset / flat-top layout)
+  function getHexNeighbors(r,c){
+    const even = (r % 2) === 0;
+    if(even){
+      return [[r, c-1],[r, c+1],[r-1, c],[r-1, c-1],[r+1, c],[r+1, c-1]];
+    } else {
+      return [[r, c-1],[r, c+1],[r-1, c+1],[r-1, c],[r+1, c+1],[r+1, c]];
+    }
+  }
 
-  // Helper: explore 4-directional connected component starting at r,c for predicate
+  // Helper: explore connected component on hex adjacency
   function exploreComponent(startR, startC, predicate){
     const stack = [[startR,startC]];
     const comp = [];
     const seen = Array.from({length:rows},()=>Array.from({length:cols},()=>false));
     seen[startR][startC] = true;
     while(stack.length){
-      const [r,c] = stack.pop();
-      comp.push([r,c]);
-      const nb = [[r-1,c],[r+1,c],[r,c-1],[r,c+1]];
+      const [cr,cc] = stack.pop();
+      comp.push([cr,cc]);
+      const nb = getHexNeighbors(cr,cc);
       for(const [nr,nc] of nb){
         if(nr<0||nr>=rows||nc<0||nc>=cols) continue;
         if(seen[nr][nc]) continue;
@@ -38,7 +47,7 @@ export function findMatches(state){
     return comp;
   }
 
-  // color-based connected components (4-dir). Sum 'value' in each component and compare to threshold.
+  // color-based connected components (hex 6-dir). Sum 'value' in each component and compare to threshold.
   for(let colorIdx=0;colorIdx<colorCount;colorIdx++){
     const visited = Array.from({length:rows},()=>Array.from({length:cols},()=>false));
     for(let r=0;r<rows;r++){
@@ -53,7 +62,7 @@ export function findMatches(state){
         while(stack.length){
           const [cr,cc] = stack.pop();
           comp.push([cr,cc]);
-          const nb = [[cr-1,cc],[cr+1,cc],[cr,cc-1],[cr,cc+1]];
+          const nb = getHexNeighbors(cr,cc);
           for(const [nr,nc] of nb){
             if(nr<0||nr>=rows||nc<0||nc>=cols) continue;
             if(visited[nr][nc]) continue;
@@ -73,7 +82,7 @@ export function findMatches(state){
     }
   }
 
-  // shape-based connected components (4-dir)
+  // shape-based connected components (hex 6-dir)
   for(let shapeIdx=0;shapeIdx<shapeCount;shapeIdx++){
     const visited = Array.from({length:rows},()=>Array.from({length:cols},()=>false));
     for(let r=0;r<rows;r++){
@@ -87,7 +96,7 @@ export function findMatches(state){
         while(stack.length){
           const [cr,cc] = stack.pop();
           comp.push([cr,cc]);
-          const nb = [[cr-1,cc],[cr+1,cc],[cr,cc-1],[cr,cc+1]];
+          const nb = getHexNeighbors(cr,cc);
           for(const [nr,nc] of nb){
             if(nr<0||nr>=rows||nc<0||nc>=cols) continue;
             if(visited[nr][nc]) continue;

@@ -53,7 +53,7 @@ export function renderEffectsPanel(getState){
         actionSummary.textContent = `発動内容: ${targetLabel} を ${cnt} 個削除`;
       } else if(ac.kind === 'remove_line'){
         const lines = ac.count || 1;
-        actionSummary.textContent = `発動内容: 行または列を ${lines} 本消去`;
+        actionSummary.textContent = `発動内容: 行または斜め方向（2方向）を ${lines} 本消去`;
       } else if(ac.kind === 'remove_rect'){
         actionSummary.textContent = `発動内容: ${ac.h}x${ac.w} の矩形を削除`;
       } else {
@@ -84,7 +84,7 @@ export function showEffectChoicePanel(options, thresh){
         const ac = opt.action;
         if(ac.kind==='remove_target') desc += ` ${ac.targetKind==='color' ? getColorName(ac.targetType) : '形:'+getShapeLabel(ac.targetType)} を ${ac.count} 個削除`;
         else if(ac.kind==='remove_rect') desc += ` ${ac.h}x${ac.w} の矩形を削除`;
-        else if(ac.kind==='remove_line') desc += ` 行または列を ${ac.count || 1} 本消去`;
+        else if(ac.kind==='remove_line') desc += ` 行または斜め方向（2方向）を ${ac.count || 1} 本消去`;
         else if(ac.kind==='combo_bonus') desc += ` コンボボーナス x${opt.multiplier}`;
       }
       d.textContent = desc;
